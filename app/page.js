@@ -122,7 +122,7 @@ export default function Home() {
           flexDirection={'column'}
           alignItems={'center'}
           gap={2}
-          bgcolor="#f5f5f5"
+          bgcolor="#CFF4F3"
         >
           <Modal
             open={open}
@@ -157,7 +157,7 @@ export default function Home() {
               </Stack>
             </Box>
           </Modal>
-          <Button variant="contained" color="primary" onClick={handleOpen}>
+          <Button variant="contained" color="secondary" onClick={handleOpen}>
             Add New Item
           </Button>
           <TextField
