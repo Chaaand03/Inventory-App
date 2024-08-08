@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { Box, Stack, Typography, Button, Modal, TextField } from '@mui/material'
+import { Box, Stack, Typography, Button, Modal, TextField, Menu, MenuItem } from '@mui/material'
 // import { firestore } from '@/firebase'
 import {
   collection,
@@ -27,19 +27,23 @@ const style = {
   left: '50%',
   transform: 'translate(-50%, -50%)',
   width: 400,
-  bgcolor: 'white',
+  bgcolor: 'background.paper',
   border: '2px solid #000',
   boxShadow: 24,
   p: 4,
   display: 'flex',
   flexDirection: 'column',
   gap: 3,
+  borderRadius: 2,
 }
 
 export default function Home() {
     const [inventory, setInventory] = useState([])
     const [open, setOpen] = useState(false)
-    const [itemName, setItemName] = useState('')  
+    const [itemName, setItemName] = useState('') 
+    const [searchQuery, setSearchQuery] = useState('') 
+    const [filterAnchorEl, setFilterAnchorEl] = useState(null);
+    const [filterOption, setFilterOption] = useState('');
 
     const updateInventory = async () => {
         if (!firestore) return;
@@ -88,8 +92,27 @@ export default function Home() {
     const handleOpen = () => setOpen(true)
     const handleClose = () => setOpen(false)
 
-    
-    
+
+    const handleFilterOpen = (event) => setFilterAnchorEl(event.currentTarget);
+    const handleFilterClose = () => setFilterAnchorEl(null);
+
+    const handleFilterSelect = (option) => {
+        setFilterOption(option);
+        handleFilterClose();
+    };
+
+    // Filter the inventory based on the search query
+    const filteredInventory = inventory
+    .filter(item => item.name.toLowerCase().includes(searchQuery.toLowerCase()))
+    .sort((a, b) => {
+      if (filterOption === 'Low to High') {
+        return a.quantity - b.quantity;
+      } else if (filterOption === 'High to Low') {
+        return b.quantity - a.quantity;
+      }
+      return 0;
+    });
+
     return (
         <Box
           width="100vw"
@@ -99,6 +122,7 @@ export default function Home() {
           flexDirection={'column'}
           alignItems={'center'}
           gap={2}
+          bgcolor="#f5f5f5"
         >
           <Modal
             open={open}
@@ -107,7 +131,7 @@ export default function Home() {
             aria-describedby="modal-modal-description"
           >
             <Box sx={style}>
-              <Typography id="modal-modal-title" variant="h6" component="h2">
+              <Typography id="modal-modal-title" variant="h6" component="h2" mb={2}>
                 Add Item
               </Typography>
               <Stack width="100%" direction={'row'} spacing={2}>
@@ -120,7 +144,8 @@ export default function Home() {
                   onChange={(e) => setItemName(e.target.value)}
                 />
                 <Button
-                  variant="outlined"
+                  variant="contained"
+                  color="primary"
                   onClick={async () => {
                     addItem(itemName)
                     setItemName('')
@@ -132,41 +157,79 @@ export default function Home() {
               </Stack>
             </Box>
           </Modal>
-          <Button variant="contained" onClick={handleOpen}>
+          <Button variant="contained" color="primary" onClick={handleOpen}>
             Add New Item
           </Button>
-          <Box border={'1px solid #333'}>
+          <TextField
+            label="Search"
+            variant="outlined"
+            fullWidth
+            margin="normal"
+            sx={{ 
+                width: '300px', 
+                margin: 'normal', 
+                padding: '8px' 
+            }}
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+          />
+
+            <Button
+                variant="contained"
+                color="secondary"
+                onClick={handleFilterOpen}
+                sx={{ marginBottom: 2 }}
+            >
+                Filter by Quantity
+            </Button>
+            <Menu
+                anchorEl={filterAnchorEl}
+                open={Boolean(filterAnchorEl)}
+                onClose={handleFilterClose}
+            >
+                <MenuItem onClick={() => handleFilterSelect('Low to High')}>Low to High</MenuItem>
+                <MenuItem onClick={() => handleFilterSelect('High to Low')}>High to Low</MenuItem>
+            </Menu>
+
+          <Box border={'1px solid #333'} borderRadius={2} bgcolor="white" p={2}>
             <Box
               width="800px"
-              height="100px"
-              bgcolor={'#ADD8E6'}
+              height="80px"
+              bgcolor={'#3f51b5'}
               display={'flex'}
               justifyContent={'center'}
               alignItems={'center'}
+              borderRadius={1}
             >
-              <Typography variant={'h2'} color={'#333'} textAlign={'center'}>
+              <Typography variant={'h4'} color={'white'} textAlign={'center'}>
                 Inventory Items
               </Typography>
             </Box>
-            <Stack width="800px" height="300px" spacing={2} overflow={'auto'}>
-              {inventory.map(({name, quantity}) => (
+            <Stack width="800px" height="400px" spacing={2} overflow={'auto'} mt={2}
+              p={1}
+              bgcolor="#f5f5f5"
+              borderRadius={1}>
+              {filteredInventory.map(({name, quantity}) => (
                 <Box
                   key={name}
                   width="100%"
-                  minHeight="150px"
+                  minHeight="100px"
                   display={'flex'}
                   justifyContent={'space-between'}
                   alignItems={'center'}
-                  bgcolor={'#f0f0f0'}
+                  bgcolor={'white'}
                   paddingX={5}
+                  boxShadow={1}
+                  p={2}
+                  borderRadius={1}
                 >
-                  <Typography variant={'h3'} color={'#333'} textAlign={'center'}>
+                  <Typography variant={'h6'} color={'#333'} textAlign={'center'}>
                     {name.charAt(0).toUpperCase() + name.slice(1)}
                   </Typography>
-                  <Typography variant={'h3'} color={'#333'} textAlign={'center'}>
+                  <Typography variant={'h6'} color={'#333'} textAlign={'center'}>
                     Quantity: {quantity}
                   </Typography>
-                  <Button variant="contained" onClick={() => removeItem(name)}>
+                  <Button variant="contained" color="secondary" size="small" onClick={() => removeItem(name)}>
                     Remove
                   </Button>
                 </Box>
